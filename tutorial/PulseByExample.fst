@@ -157,7 +157,7 @@ fn max (n:SZ.t) (a:larray nat (v n))
   vmax
 }
 ```
-//this option should become the default, once I shake out the handling of address-taking
+// This option may become the default at some point
 #push-options "--ext 'pulse:rvalues'"
 ```pulse
 fn max_alt (n:SZ.t) (a:larray nat (v n))
@@ -191,16 +191,3 @@ fn max_alt (n:SZ.t) (a:larray nat (v n))
 }
 ```
 #pop-options
-
-(* 
-- some more mature example (e.g. sorting alg)
-
-- some simple record data structure along with a library of functions on this DS
-  (e.g. library of functions on 2D points)
-
-- build up to explaining the pulse implementation of lpht? -- emphasis on connecting
-  pure implementation to imperative code
-- pulse linked list? -- more traditional sep logic example 
-
-- concurrency, e.g. par incr of a ctr
-*)
