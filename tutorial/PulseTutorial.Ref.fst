@@ -15,10 +15,11 @@
 *)
 
 module PulseTutorial.Ref
+#lang-pulse
 open Pulse.Lib.Pervasives
 
 
-```pulse //incr
+//incr$
 fn incr (r:ref int)
 requires pts_to r 'v
 ensures pts_to r ('v + 1)
@@ -26,10 +27,9 @@ ensures pts_to r ('v + 1)
     let v = !r;
     r := v + 1;
 }
-```
+//end incr$
 
-
-```pulse //swap$
+//swap$
 fn swap #a (r0 r1:ref a)
 requires pts_to r0 'v0 ** pts_to r1 'v1
 ensures pts_to r0 'v1 ** pts_to r1 'v0
@@ -39,9 +39,10 @@ ensures pts_to r0 'v1 ** pts_to r1 'v0
     r0 := v1;
     r1 := v0;
 }
-```
+//end swap$
 
-```pulse //value_of$
+
+ //value_of$
 fn value_of (#a:Type) (r:ref a)
 requires pts_to r 'v
 returns v:a
@@ -49,10 +50,11 @@ ensures pts_to r 'v ** pure (v == 'v)
 {
     !r;
 }
-```
+//end value_of$
 
 
-```pulse //value_of_explicit$
+
+ //value_of_explicit$
 fn value_of_explicit (#a:Type) (r:ref a) (#w:erased a)
 requires pts_to r w
 returns v:a
@@ -60,10 +62,11 @@ ensures pts_to r w ** pure (v == reveal w)
 {
     !r;
 }
-```
+//end value_of_explicit$
+
 
 [@@expect_failure]
-```pulse //value_of_explicit_fail$
+ //value_of_explicit_fail$
 fn value_of_explicit_fail (#a:Type) (r:ref a) (#w:erased a)
 requires pts_to r w
 returns v:a
@@ -71,9 +74,10 @@ ensures pts_to r w ** pure (v == reveal w)
 {
     reveal w
 }
-```
+//end value_of_explicit_fail$
 
-```pulse //value_of_explicit_alt$
+
+ //value_of_explicit_alt$
 fn value_of_explicit_alt (#a:Type) (r:ref a) (#w:erased a)
 requires pts_to r w
 returns v:(x:a { x == reveal w } )
@@ -82,19 +86,21 @@ ensures pts_to r w
     let v = !r;
     v
 }
-```
+//end value_of_explicit_alt$
 
-```pulse //assign$
+
+ //assign$
 fn assign (#a:Type) (r:ref a) (v:a)
 requires pts_to r 'v
 ensures pts_to r v
 {
     r := v;
 }
-```
+//end assign$
 
 
-```pulse //add$
+
+ //add$
 fn add (r:ref int) (n:int)
 requires pts_to r 'v
 ensures pts_to r ('v + n)
@@ -102,12 +108,13 @@ ensures pts_to r ('v + n)
     let v = !r;
     r := v + n;
 }
-```
+//end add$
+
 
 open FStar.Mul //can we include this in Pulse.Lib.Pervasives
 
 
-```pulse //quadruple$
+ //quadruple$
 fn quadruple (r:ref int)
 requires pts_to r 'v
 ensures pts_to r (4 * 'v)
@@ -117,10 +124,11 @@ ensures pts_to r (4 * 'v)
     let v2 = !r;
     add r v2;
 }
-```
+//end quadruple$
+
 
 [@@expect_failure]
-```pulse //quadruple_show_proof_state$
+ //quadruple_show_proof_state$
 fn quadruple (r:ref int)
 requires pts_to r 'v
 ensures pts_to r (4 * 'v)
@@ -132,10 +140,11 @@ ensures pts_to r (4 * 'v)
     add r v2;    // Env=...                               Ctxt= pts_to r (v2 + v2)
                  // ..                                    Ctxt= pts_to r (4 * 'v)
 }
-```
+//end quadruple_show_proof_state$
+
 
 [@@expect_failure]
-```pulse //quad FAIL$
+ //quad FAIL$
 fn quad_fail (r:ref int)
 requires pts_to r 'v
 ensures pts_to r (4 * 'v)
@@ -143,20 +152,22 @@ ensures pts_to r (4 * 'v)
     add r (!r);
     add r (!r);
 }
-```
+//end quad FAIL$
 
 
 
-```pulse //assign_full_perm$
+
+ //assign_1.0R$
 fn assign_full_perm (#a:Type) (r:ref a) (v:a)
-requires pts_to r #full_perm 'v
-ensures pts_to r #full_perm v
+requires pts_to r #1.0R 'v
+ensures pts_to r #1.0R v
 {
     r := v;
 }
-```
+//end assign_1.0R$
 
-```pulse //value_of_perm$
+
+ //value_of_perm$
 fn value_of_perm #a #p (r:ref a)
 requires pts_to r #p 'v
 returns v:a
@@ -164,72 +175,73 @@ ensures pts_to r #p 'v ** pure (v == 'v)
 {
     !r;
 }
-```
+//end value_of_perm$
+
 
 //assign_perm FAIL$
-#push-options "--print_implicits"
 [@@expect_failure]
-```pulse
+
 fn assign_perm #a #p (r:ref a) (v:a) (#w:erased a)
 requires pts_to r #p w
 ensures pts_to r #p w
 {
     r := v;
 }
-```
-#pop-options
 //end assign_perm FAIL$
 
 
-```pulse //share_ref$
+ //share_ref$
 fn share_ref #a #p (r:ref a)
 requires pts_to r #p 'v
-ensures pts_to r #(half_perm p) 'v ** pts_to r #(half_perm p) 'v
+ensures pts_to r #(p /. 2.0R) 'v ** pts_to r #(p /. 2.0R) 'v
 {
     share r;
 }
-```
+//end share_ref$
 
-```pulse //gather_ref$
-fn gather_ref #a #p (r:ref a)
+
+ //gather_ref$
+fn gather_ref #a (#p:perm) (r:ref a)
 requires
-    pts_to r #(half_perm p) 'v0 **
-    pts_to r #(half_perm p) 'v1
+    pts_to r #(p /. 2.0R) 'v0 **
+    pts_to r #(p /. 2.0R) 'v1
 ensures
     pts_to r #p 'v0 **
     pure ('v0 == 'v1)
 {
-    gather r;
+    gather r
 }
-```
+//end gather_ref$
 
-```pulse
+
+
 fn max_perm #a (r:ref a) #p anything
-requires pts_to r #p 'v ** pure (not (p `lesser_equal_perm` full_perm))
+requires pts_to r #p 'v ** pure (~ (p <=. 1.0R))
 returns _:squash False
 ensures anything
 {
     pts_to_perm_bound r;
     unreachable();
 }
-```
 
-```pulse //alias_ref$
+
+ //alias_ref$
 fn alias_ref #a #p (r:ref a)
 requires pts_to r #p 'v
 returns s:ref a
 ensures
-    pts_to r #(half_perm p) 'v **
-    pts_to s #(half_perm p) 'v **
+    pts_to r #(p /. 2.0R) 'v **
+    pts_to s #(p /. 2.0R) 'v **
     pure (r == s)
 {
     share r;
     r
 }
-```
+//end alias_ref$
 
 
-```pulse //one
+
+ //one
 fn one ()
 requires emp
 returns v:int
@@ -241,11 +253,11 @@ ensures pure (v == 1)
     !i             //      .    |- v:int. emp ** pure (v == 1) 
 
 }
-```
+//end one
 
 
 [@@expect_failure]
-```pulse //refs_as_scoped FAIL
+ //refs_as_scoped FAIL
 fn refs_are_scoped ()
 requires emp
 returns s:ref int
@@ -254,7 +266,8 @@ ensures pts_to s 0
     let mut s = 0;
     s
 }
-```
+//end refs_as_scoped FAIL
+
 
 
 

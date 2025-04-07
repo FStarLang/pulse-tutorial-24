@@ -15,50 +15,61 @@
 *)
 
 module PulseTutorial.Array
+#lang-pulse
 
 open Pulse.Lib.Pervasives
 open Pulse.Lib.Array
 
 module SZ = FStar.SizeT
 
-```pulse //readi$
-fn read_i #t (arr:array t) (#p:perm) (#s:erased (Seq.seq t)) (i:SZ.t { SZ.v i < Seq.length s })
+//readi$
+fn read_i
+  (#[@@@ Rust_generics_bounds ["Copy"]] t:Type)
+  (arr:array t)
+  (#p:perm)
+  (#s:erased (Seq.seq t))
+  (i:SZ.t { SZ.v i < Seq.length s })
   requires pts_to arr #p s
   returns x:t
   ensures pts_to arr #p s ** pure (x == Seq.index s (SZ.v i))
 {
   arr.(i)
 }
-```
+//end readi$
 
-```pulse //writei$
-fn write_i #t (arr:array t) (#s:erased (Seq.seq t)) (x:t) (i:SZ.t { SZ.v i < Seq.length s })
+//writei$
+fn write_i (#t:Type) (arr:array t) (#s:erased (Seq.seq t)) (x:t) (i:SZ.t { SZ.v i < Seq.length s })
   requires pts_to arr s
   ensures pts_to arr (Seq.upd s (SZ.v i) x)
 {
   arr.(i) <- x
 }
-```
+//end writei$
+
 
 //writeipbegin$
 [@@ expect_failure]
-```pulse
+
 fn write_ip #t (arr:array t) (#p:perm) (#s:erased _) (x:t) (i:SZ.t { SZ.v i < Seq.length s })
   requires pts_to arr #p s
   ensures pts_to arr #p (Seq.upd s (SZ.v i) x)
 {
   arr.(i) <- x
 }
-```
+
 //writeipend$
 
 module A = Pulse.Lib.Array
 module R = Pulse.Lib.Reference
 open FStar.SizeT
 
-```pulse
+
 //comparesigbegin$
-fn compare (#t:eqtype) #p1 #p2 (a1 a2:A.array t) (l:SZ.t) 
+fn compare
+  (#[@@@ Rust_generics_bounds ["PartialEq"; "Copy"]] t:eqtype)
+  #p1 #p2
+  (a1 a2:A.array t)
+  (l:SZ.t) 
   requires (
     A.pts_to a1 #p1 's1 **
     A.pts_to a2 #p2 's2 **
@@ -104,10 +115,14 @@ fn compare (#t:eqtype) #p1 #p2 (a1 a2:A.array t) (l:SZ.t)
   res
 }
 //compareimplend$
-```
 
-```pulse //copy$
-fn copy #t (a1 a2:A.array t) (l:SZ.t)
+
+ //copy$
+fn copy
+  (#[@@@ Rust_generics_bounds ["Copy"]] t:Type0)
+  (a1 a2:A.array t)
+  (l:SZ.t)
+  (#p2:perm)
   requires (
     A.pts_to a1 's1 **
     A.pts_to a2 #p2 's2 **
@@ -142,11 +157,15 @@ fn copy #t (a1 a2:A.array t) (l:SZ.t)
     i := vi +^ 1sz
   }
 }
-```
+//end copy$
 
-```pulse
+
 //copy2sigbegin$
-fn copy2 #t (a1 a2:A.array t) (l:SZ.t)
+fn copy2
+  (#[@@@ Rust_generics_bounds ["Copy"]] t:Type0)
+  (a1 a2:A.array t)
+  (l:SZ.t)
+  (#p2:perm)
   requires (
     A.pts_to a1 's1 **
     A.pts_to a2 #p2 's2 **
@@ -188,9 +207,9 @@ fn copy2 #t (a1 a2:A.array t) (l:SZ.t)
   ()
   //copy2rewritingend$
 }
-```
 
-```pulse //compare_stack_arrays$
+
+ //compare_stack_arrays$
 fn compare_stack_arrays ()
   requires emp
   ensures emp
@@ -203,11 +222,11 @@ fn compare_stack_arrays ()
   let b = compare a1 a2 2sz;
   assert (pure b)
 }
-```
+//end compare_stack_arrays$
 
 //ret_stack_array$
 [@@ expect_failure]
-```pulse
+
 fn ret_stack_array ()
   requires emp
   returns a:array int
@@ -216,13 +235,13 @@ fn ret_stack_array ()
   let mut a1 = [| 0; 2sz |];
   a1  // cannot prove pts_to a (Seq.create 0 2) in the context emp
 }
-```
+
 //ret_stack_array_end$
 
 //heaparray$
 module V = Pulse.Lib.Vec
 
-```pulse 
+ 
 fn heap_arrays ()
   requires emp
   returns a:V.vec int
@@ -233,11 +252,11 @@ fn heap_arrays ()
   V.free a1;
   a2  // returning vec is ok
 }
-```
+
 //heaparrayend$
 
-```pulse //copyuse$
-fn copy_app (v:V.vec int)
+ //copyuse$
+fn copy_app ([@@@ Rust_mut_binder] v:V.vec int)
   requires exists* s. V.pts_to v s ** pure (Seq.length s == 2)
   ensures V.pts_to v (Seq.create 2 0)
 {
@@ -250,4 +269,4 @@ fn copy_app (v:V.vec int)
   V.to_vec_pts_to v
   // v, s |- V.pts_to v (Seq.create 2 0) ** ...
 }
-```
+//end copyuse$
