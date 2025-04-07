@@ -1,6 +1,6 @@
 {
-  "name": "Steel devcontainer",
-  "image": "mtzguido/steel-devcontainer:latest",
+  "name": "Pulse tutorial devcontainer",
+  "image": "mtzguido/pulse-tutorial:latest",
   // "build": {
   //   "dockerfile": "minimal.Dockerfile"
   // },
@@ -16,7 +16,7 @@
   // Runs only once when container is prepared
   "onCreateCommand": "",
   // Runs periodically and/or when content of repo changes
-  "updateContentCommand": "ln -s ~/steel steel",
+  "updateContentCommand": "ln -s ~/pulse pulse",
   // These run only when the container is assigned to a user
-  "postCreateCommand": "",
+  "postCreateCommand": ""
 }

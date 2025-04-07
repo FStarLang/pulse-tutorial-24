@@ -1,0 +1,12 @@
+{
+  "fstar_exe": "fstar.exe",
+  "options": [
+    "--warn_error",
+    "-249"
+  ],
+  "include_dirs": [
+    "pulse/out/lib/pulse",
+    "pulse/share/pulse/examples",
+    "tutorial"
+  ]
+}
